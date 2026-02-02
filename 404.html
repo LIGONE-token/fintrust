@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Redirect</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>
+    // GitHub Pages Fallback: alle unbekannten Pfade zurück auf Root
+    // Pfad bleibt im Browser erhalten.
+    (function () {
+      var path = window.location.pathname + window.location.search + window.location.hash;
+      if (!path.startsWith('/index.html')) {
+        window.location.replace('/index.html' + path);
+      }
+    })();
+  </script>
+</head>
+<body></body>
+</html>

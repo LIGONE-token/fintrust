@@ -1,0 +1,26 @@
+[
+  {
+    "asset_id": "crypto:btc",
+    "level": "hoch",
+    "flags": ["high_volatility", "macro_sensitive"],
+    "last_update": "2026-02-03"
+  },
+  {
+    "asset_id": "crypto:eth",
+    "level": "mittel",
+    "flags": ["network_dependency"],
+    "last_update": "2026-02-03"
+  },
+  {
+    "asset_id": "crypto:lig1",
+    "level": "speziell",
+    "flags": ["low_liquidity", "early_stage"],
+    "last_update": "2026-02-03"
+  },
+  {
+    "asset_id": "stock:nvda",
+    "level": "mittel",
+    "flags": ["earnings_sensitive", "hype_phase"],
+    "last_update": "2026-02-03"
+  }
+]

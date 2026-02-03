@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="utf-8">
-  <title>App</title>
+  <title>FINTRUST</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body>
@@ -12,50 +12,17 @@
     (function () {
       const app = document.getElementById('app');
 
-      // Repo-Base automatisch erkennen (z. B. /fintrust)
-      const parts = window.location.pathname.replace(/\/+$/, '').split('/');
-      const base = parts.length > 1 ? '/' + parts[1] : '';
-      const path = window.location.pathname.replace(base, '').replace(/\/+$/, '') || '/';
+      // Repo-Base: /fintrust
+      const base = '/fintrust';
+      const full = window.location.pathname;
+      const path = full.startsWith(base)
+        ? full.slice(base.length) || '/'
+        : '/';
 
-      function renderHome() {
-        app.innerHTML = `<h1>Startseite</h1><p>Pfad: /</p>`;
-      }
-
-      function renderAsset(type, slug) {
-        app.innerHTML = `
-          <h1>Asset-Seite</h1>
-          <p><strong>Typ:</strong> ${type}</p>
-          <p><strong>Slug:</strong> ${slug}</p>
-        `;
-      }
-
-      function renderRadar(subpath) {
-        app.innerHTML = `
-          <h1>Radar</h1>
-          <p>Radar-Pfad: ${subpath}</p>
-        `;
-      }
-
-      // Routing
-      if (path === '/' || path === '') {
-        renderHome();
-        return;
-      }
-
-      if (path.startsWith('/assets/')) {
-        const seg = path.split('/').filter(Boolean); // ['assets','crypto','btc']
-        const type = seg[1] || '';
-        const slug = seg[2] || '';
-        renderAsset(type, slug);
-        return;
-      }
-
-      if (path.startsWith('/radar')) {
-        renderRadar(path);
-        return;
-      }
-
-      app.innerHTML = `<h1>Unbekannter Pfad</h1><p>${path}</p>`;
+      app.innerHTML = `
+        <h1>FINTRUST</h1>
+        <p><strong>Pfad:</strong> ${path}</p>
+      `;
     })();
   </script>
 </body>

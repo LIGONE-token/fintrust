@@ -6,12 +6,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body>
-  <div id="app">OK</div>
+  <div id="app"></div>
 
   <script>
-    // Platzhalter: In Schritt 2 kommt hier der Router rein.
-    // Schritt 1 prüft NUR, dass Root korrekt lädt.
-    console.log('index.html geladen');
+    (function () {
+      const app = document.getElementById('app');
+
+      // Aktuellen Pfad lesen (ohne Query/Hash)
+      const path = window.location.pathname.replace(/\/+$/, '') || '/';
+
+      // Minimal-Render
+      app.innerHTML = `
+        <h1>Router aktiv</h1>
+        <p><strong>Pfad:</strong> ${path}</p>
+      `;
+    })();
   </script>
 </body>
 </html>

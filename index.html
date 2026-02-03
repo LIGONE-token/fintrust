@@ -9,122 +9,133 @@
   <div id="app"></div>
 
   <script>
-(async function () {
-  const app = document.getElementById('app');
-  const BASE = '/fintrust';
+  (async function () {
+    const app = document.getElementById('app');
+    const BASE = '/fintrust';
 
-  // Pfad normalisieren
-  const full = window.location.pathname;
-  const path = full.startsWith(BASE) ? full.slice(BASE.length) || '/' : '/';
+    /* =========================
+       PFAD NORMALISIEREN (FINAL)
+       ========================= */
+    const full = window.location.pathname;
 
-  // JSON laden
-  async function loadJSON(url) {
-    const res = await fetch(url, { cache: 'no-store' });
-    if (!res.ok) throw new Error(url);
-    return res.json();
-  }
+    let path = full.startsWith(BASE)
+      ? full.slice(BASE.length)
+      : full;
 
-  let assets, risks, radar;
-  try {
-    [assets, risks, radar] = await Promise.all([
-      loadJSON(BASE + '/data/assets.json'),
-      loadJSON(BASE + '/data/risk_profiles.json'),
-      loadJSON(BASE + '/data/radar_events.json')
-    ]);
-  } catch (e) {
-    app.innerHTML = `<h1>Datenfehler</h1><p>${e.message}</p>`;
-    return;
-  }
+    // immer genau EIN führender Slash, KEINE trailing Slashes
+    path = '/' + path.replace(/^\/+|\/+$/g, '');
 
-  /* =========================
-     1️⃣ STARTSEITE
-     ========================= */
-  if (path === '/' || path === '') {
-    app.innerHTML = `
-      <h1>FINTRUST</h1>
-      <p>Assets geladen: ${assets.length}</p>
-      <ul>
-        ${assets.map(a => `
-          <li>
-            <a href="${BASE}/assets/${a.type}/${a.symbol.toLowerCase()}">
-              ${a.name} (${a.symbol})
-            </a>
-          </li>
-        `).join('')}
-      </ul>
-      <p><a href="${BASE}/radar">→ Radar</a></p>
-    `;
-    return;
-  }
+    /* =========================
+       JSON LADEN
+       ========================= */
+    async function loadJSON(url) {
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) throw new Error('Load failed: ' + url);
+      return res.json();
+    }
 
-  /* =========================
-     2️⃣ ASSET-SEITE
-     ========================= */
-  if (path.startsWith('/assets/')) {
-    const seg = path.split('/').filter(Boolean);
-    const type = seg[1];
-    const slug = seg[2]?.toUpperCase();
-
-    const asset = assets.find(a => a.type === type && a.symbol === slug);
-    if (!asset) {
-      app.innerHTML = `<h1>Asset nicht gefunden</h1>`;
+    let assets, risks, radar;
+    try {
+      [assets, risks, radar] = await Promise.all([
+        loadJSON(BASE + '/data/assets.json'),
+        loadJSON(BASE + '/data/risk_profiles.json'),
+        loadJSON(BASE + '/data/radar_events.json')
+      ]);
+    } catch (e) {
+      app.innerHTML = `<h1>Datenfehler</h1><p>${e.message}</p>`;
       return;
     }
 
-    const risk = risks.find(r => r.asset_id === asset.id);
-    const events = radar.filter(r => r.asset_id === asset.id);
-
-    app.innerHTML = `
-      <h1>${asset.name} (${asset.symbol})</h1>
-      <p><strong>Typ:</strong> ${asset.type}</p>
-      <p><strong>Risiko:</strong> ${risk?.level ?? '—'}</p>
-      <p><strong>Flags:</strong> ${(risk?.flags || []).join(', ')}</p>
-
-      <h2>Radar</h2>
-      ${events.length ? `
+    /* =========================
+       STARTSEITE
+       ========================= */
+    if (path === '/') {
+      app.innerHTML = `
+        <h1>FINTRUST</h1>
+        <p>Assets geladen: ${assets.length}</p>
         <ul>
-          ${events.map(e => `
-            <li><strong>${e.severity}</strong>: ${e.message}</li>
+          ${assets.map(a => `
+            <li>
+              <a href="${BASE}/assets/${a.type}/${a.symbol.toLowerCase()}">
+                ${a.name} (${a.symbol})
+              </a>
+            </li>
           `).join('')}
         </ul>
-      ` : '<p>Keine aktuellen Auffälligkeiten.</p>'}
+        <p><a href="${BASE}/radar">→ Radar</a></p>
+      `;
+      return;
+    }
 
-      <p><a href="${BASE}/radar">→ Gesamtes Radar</a></p>
-    `;
-    return;
-  }
+    /* =========================
+       ASSET-SEITE
+       /assets/{type}/{slug}
+       ========================= */
+    if (path.startsWith('/assets/')) {
+      const seg = path.split('/').filter(Boolean);
+      const type = seg[1];
+      const slug = seg[2]?.toUpperCase();
 
-  /* =========================
-     3️⃣ 👉 HIER KOMMT RADAR 👈
-     ========================= */
-  if (path.replace(/\/+$/, '') === '/radar') {
-    app.innerHTML = `
-      <h1>Radar</h1>
-      ${radar.length ? `
-        <ul>
-          ${radar.map(e => {
-            const asset = assets.find(a => a.id === e.asset_id);
-            return `
-              <li>
-                <strong>${asset?.name ?? e.asset_id}</strong>
-                (${e.category}, ${e.severity}) –
-                ${e.message}
-              </li>
-            `;
-          }).join('')}
-        </ul>
-      ` : '<p>Keine aktuellen Auffälligkeiten.</p>'}
-    `;
-    return;
-  }
+      const asset = assets.find(a => a.type === type && a.symbol === slug);
+      if (!asset) {
+        app.innerHTML = `<h1>Asset nicht gefunden</h1>`;
+        return;
+      }
 
-  /* =========================
-     4️⃣ FALLBACK
-     ========================= */
-  app.innerHTML = `<h1>Unbekannter Pfad</h1><p>${path}</p>`;
+      const risk = risks.find(r => r.asset_id === asset.id);
+      const events = radar.filter(r => r.asset_id === asset.id);
 
-})();
-</script>
+      app.innerHTML = `
+        <h1>${asset.name} (${asset.symbol})</h1>
+        <p><strong>Typ:</strong> ${asset.type}</p>
+        <p><strong>Risiko:</strong> ${risk?.level ?? '—'}</p>
+        <p><strong>Flags:</strong> ${(risk?.flags || []).join(', ')}</p>
 
+        <h2>Radar</h2>
+        ${events.length ? `
+          <ul>
+            ${events.map(e => `
+              <li><strong>${e.severity}</strong>: ${e.message}</li>
+            `).join('')}
+          </ul>
+        ` : '<p>Keine aktuellen Auffälligkeiten.</p>'}
+
+        <p><a href="${BASE}/radar">→ Gesamtes Radar</a></p>
+      `;
+      return;
+    }
+
+    /* =========================
+       RADAR-SEITE
+       /radar
+       ========================= */
+    if (path === '/radar') {
+      app.innerHTML = `
+        <h1>Radar</h1>
+        ${radar.length ? `
+          <ul>
+            ${radar.map(e => {
+              const asset = assets.find(a => a.id === e.asset_id);
+              return `
+                <li>
+                  <strong>${asset?.name ?? e.asset_id}</strong>
+                  (${e.category}, ${e.severity}) –
+                  ${e.message}
+                </li>
+              `;
+            }).join('')}
+          </ul>
+        ` : '<p>Keine aktuellen Auffälligkeiten.</p>'}
+      `;
+      return;
+    }
+
+    /* =========================
+       FALLBACK
+       ========================= */
+    app.innerHTML = `<h1>Unbekannter Pfad</h1><p>${path}</p>`;
+
+  })();
+  </script>
 </body>
 </html>

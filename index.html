@@ -97,7 +97,7 @@
   /* =========================
      3️⃣ 👉 HIER KOMMT RADAR 👈
      ========================= */
-  if (path === '/radar') {
+  if (path.replace(/\/+$/, '') === '/radar') {
     app.innerHTML = `
       <h1>Radar</h1>
       ${radar.length ? `

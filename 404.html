@@ -9,21 +9,90 @@
   <div id="app"></div>
 
   <script>
-    (function () {
-      const app = document.getElementById('app');
+(async function () {
+  const app = document.getElementById('app');
 
-      // Repo-Base: /fintrust
-      const base = '/fintrust';
-      const full = window.location.pathname;
-      const path = full.startsWith(base)
-        ? full.slice(base.length) || '/'
-        : '/';
+  // Repo-Base (Project Pages)
+  const BASE = '/fintrust';
 
-      app.innerHTML = `
-        <h1>FINTRUST</h1>
-        <p><strong>Pfad:</strong> ${path}</p>
-      `;
-    })();
-  </script>
+  // Pfad normalisieren
+  const full = window.location.pathname;
+  const path = full.startsWith(BASE) ? full.slice(BASE.length) || '/' : '/';
+
+  // Helper: JSON laden
+  async function loadJSON(url) {
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) throw new Error('Load failed: ' + url);
+    return res.json();
+  }
+
+  // Daten laden
+  let assets, risks, radar;
+  try {
+    [assets, risks, radar] = await Promise.all([
+      loadJSON(BASE + '/data/assets.json'),
+      loadJSON(BASE + '/data/risk_profiles.json'),
+      loadJSON(BASE + '/data/radar_events.json')
+    ]);
+  } catch (e) {
+    app.innerHTML = `<h1>Datenfehler</h1><pre>${e.message}</pre>`;
+    return;
+  }
+
+  // Startseite
+  if (path === '/' || path === '') {
+    app.innerHTML = `
+      <h1>FINTRUST</h1>
+      <p>Assets geladen: ${assets.length}</p>
+      <ul>
+        ${assets.map(a => `
+          <li>
+            <a href="${BASE}/assets/${a.type}/${a.symbol.toLowerCase()}">
+              ${a.name} (${a.symbol})
+            </a>
+          </li>
+        `).join('')}
+      </ul>
+    `;
+    return;
+  }
+
+  // Asset-Seite: /assets/{type}/{slug}
+  if (path.startsWith('/assets/')) {
+    const seg = path.split('/').filter(Boolean); // ['assets','crypto','btc']
+    const type = seg[1];
+    const slug = seg[2]?.toUpperCase();
+
+    const asset = assets.find(a => a.type === type && a.symbol === slug);
+    if (!asset) {
+      app.innerHTML = `<h1>Asset nicht gefunden</h1>`;
+      return;
+    }
+
+    const risk = risks.find(r => r.asset_id === asset.id);
+    const events = radar.filter(r => r.asset_id === asset.id);
+
+    app.innerHTML = `
+      <h1>${asset.name} (${asset.symbol})</h1>
+      <p><strong>Typ:</strong> ${asset.type}</p>
+      <p><strong>Risiko:</strong> ${risk?.level ?? '—'}</p>
+      <p><strong>Flags:</strong> ${(risk?.flags || []).join(', ')}</p>
+
+      <h2>Radar</h2>
+      ${events.length ? `
+        <ul>
+          ${events.map(e => `
+            <li><strong>${e.severity}</strong>: ${e.message}</li>
+          `).join('')}
+        </ul>
+      ` : '<p>Keine aktuellen Auffälligkeiten.</p>'}
+    `;
+    return;
+  }
+
+  app.innerHTML = `<h1>Unbekannter Pfad</h1><p>${path}</p>`;
+})();
+</script>
+
 </body>
 </html>

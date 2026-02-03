@@ -1,0 +1,14 @@
+[
+  {
+    "asset_id": "crypto:btc",
+    "scope": "short_term",
+    "text": "Historisch folgt auf vergleichbare Bewegungen häufig eine Beruhigungsphase.",
+    "author": "system"
+  },
+  {
+    "asset_id": "crypto:lig1",
+    "scope": "general",
+    "text": "Projekt mit Fokus auf langfristige Stabilität statt kurzfristiger Rendite.",
+    "author": "system"
+  }
+]

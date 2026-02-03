@@ -55,27 +55,47 @@
       return;
     }
 
-    // ===== RADAR =====
-    if (path.startsWith('/radar')) {
-      app.innerHTML = `
-        <h1>Radar</h1>
-        ${radar.length ? `
-          <ul>
-            ${radar.map(e => {
-              const asset = assets.find(a => a.id === e.asset_id);
-              return `
-                <li>
-                  <strong>${asset?.name ?? e.asset_id}</strong>
-                  (${e.category}, ${e.severity}) – ${e.message}
-                </li>
-              `;
-            }).join('')}
-          </ul>
-        ` : '<p>Keine aktuellen Auffälligkeiten.</p>'}
-        <p><a href="#/">← Start</a></p>
-      `;
-      return;
-    }
+   /* ===== RADAR ===== */
+if (path.startsWith('/radar')) {
+
+  const params = new URLSearchParams(location.hash.split('?')[1] || '');
+  const filter = params.get('severity'); // info | warning | critical | null
+
+  const filtered = filter
+    ? radar.filter(r => r.severity === filter)
+    : radar;
+
+  app.innerHTML = `
+    <h1>Radar</h1>
+
+    <p>
+      Filter:
+      <a href="#/radar">Alle</a> |
+      <a href="#/radar?severity=warning">Warning</a> |
+      <a href="#/radar?severity=info">Info</a> |
+      <a href="#/radar?severity=critical">Critical</a>
+    </p>
+
+    ${filtered.length ? `
+      <ul>
+        ${filtered.map(e => {
+          const asset = assets.find(a => a.id === e.asset_id);
+          return `
+            <li>
+              <strong>${asset?.name ?? e.asset_id}</strong>
+              <em>(${e.category}, ${e.severity})</em><br>
+              ${e.message}
+            </li>
+          `;
+        }).join('')}
+      </ul>
+    ` : '<p>Keine Radar-Einträge für diesen Filter.</p>'}
+
+    <p><a href="#/">← Start</a></p>
+  `;
+  return;
+}
+
 
     // ===== ASSET =====
     if (path.startsWith('/assets/')) {

@@ -2,10 +2,23 @@
 <html lang="de">
 <head>
   <meta charset="utf-8">
+  <title>FINTRUST</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <script>
-    // Alle unbekannten Pfade an index.html durchreichen
-    var p = window.location.pathname + window.location.search + window.location.hash;
-    window.location.replace('/fintrust/index.html' + p.replace('/fintrust', ''));
+    // GitHub Pages SPA-Fallback:
+    // Leitet intern auf die App, ohne die URL zu verändern.
+    (function () {
+      var repoBase = '/fintrust';
+      var path = window.location.pathname;
+
+      if (!path.startsWith(repoBase)) {
+        path = repoBase + path;
+      }
+
+      // Interner Reload der App
+      window.history.replaceState(null, '', path);
+      window.location.replace(repoBase + '/');
+    })();
   </script>
 </head>
 <body></body>

@@ -13,22 +13,12 @@
     const app = document.getElementById('app');
     const BASE = '/fintrust';
 
-    /* =========================
-       PFAD – ABSOLUT ROBUST
-       ========================= */
-    let path = window.location.pathname;
+    // ===== HASH-ROUTING (ENDGÜLTIG) =====
+    // Alles NACH # ist Client-Routing
+    let path = location.hash.replace(/^#/, '') || '/';
+    if (!path.startsWith('/')) path = '/' + path;
 
-    if (path.startsWith(BASE)) {
-      path = path.slice(BASE.length);
-    }
-
-    if (!path.startsWith('/')) {
-      path = '/' + path;
-    }
-
-    /* =========================
-       JSON LADEN
-       ========================= */
+    // ===== JSON LADEN =====
     async function loadJSON(url) {
       const res = await fetch(url, { cache: 'no-store' });
       if (!res.ok) throw new Error(url);
@@ -47,29 +37,25 @@
       return;
     }
 
-    /* =========================
-       STARTSEITE
-       ========================= */
-    if (path === '/' || path === '') {
+    // ===== START =====
+    if (path === '/' ) {
       app.innerHTML = `
         <h1>FINTRUST</h1>
         <ul>
           ${assets.map(a => `
             <li>
-              <a href="${BASE}/assets/${a.type}/${a.symbol.toLowerCase()}">
+              <a href="#/assets/${a.type}/${a.symbol.toLowerCase()}">
                 ${a.name} (${a.symbol})
               </a>
             </li>
           `).join('')}
         </ul>
-        <p><a href="${BASE}/radar">→ Radar</a></p>
+        <p><a href="#/radar">→ Radar</a></p>
       `;
       return;
     }
 
-    /* =========================
-       RADAR – HIER DER FIX
-       ========================= */
+    // ===== RADAR =====
     if (path.startsWith('/radar')) {
       app.innerHTML = `
         <h1>Radar</h1>
@@ -80,20 +66,18 @@
               return `
                 <li>
                   <strong>${asset?.name ?? e.asset_id}</strong>
-                  (${e.category}, ${e.severity}) –
-                  ${e.message}
+                  (${e.category}, ${e.severity}) – ${e.message}
                 </li>
               `;
             }).join('')}
           </ul>
         ` : '<p>Keine aktuellen Auffälligkeiten.</p>'}
+        <p><a href="#/">← Start</a></p>
       `;
       return;
     }
 
-    /* =========================
-       ASSET
-       ========================= */
+    // ===== ASSET =====
     if (path.startsWith('/assets/')) {
       const seg = path.split('/').filter(Boolean);
       const type = seg[1];
@@ -101,7 +85,7 @@
 
       const asset = assets.find(a => a.type === type && a.symbol === slug);
       if (!asset) {
-        app.innerHTML = `<h1>Asset nicht gefunden</h1>`;
+        app.innerHTML = `<h1>Asset nicht gefunden</h1><p><a href="#/">← Start</a></p>`;
         return;
       }
 
@@ -116,18 +100,15 @@
         <h2>Radar</h2>
         ${events.length ? `
           <ul>
-            ${events.map(e => `
-              <li><strong>${e.severity}</strong>: ${e.message}</li>
-            `).join('')}
+            ${events.map(e => `<li><strong>${e.severity}</strong>: ${e.message}</li>`).join('')}
           </ul>
         ` : '<p>Keine aktuellen Auffälligkeiten.</p>'}
+
+        <p><a href="#/radar">→ Radar</a> · <a href="#/">← Start</a></p>
       `;
       return;
     }
 
-    /* =========================
-       FALLBACK
-       ========================= */
     app.innerHTML = `<h1>Unbekannter Pfad</h1><p>${path}</p>`;
   })();
   </script>

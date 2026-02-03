@@ -12,14 +12,45 @@
     (function () {
       const app = document.getElementById('app');
 
-      // Aktuellen Pfad lesen (ohne Query/Hash)
-      const path = window.location.pathname.replace(/\/+$/, '') || '/';
+      // Repo-Base automatisch berücksichtigen (/fintrust)
+      const base = window.location.pathname.split('/')[1];
+      const fullPath = window.location.pathname.replace(/\/+$/, '');
+      const path = fullPath.replace(new RegExp('^/' + base), '') || '/';
 
-      // Minimal-Render
-      app.innerHTML = `
-        <h1>Router aktiv</h1>
-        <p><strong>Pfad:</strong> ${path}</p>
-      `;
+      function renderHome() {
+        app.innerHTML = `
+          <h1>Startseite</h1>
+          <p>Pfad: /</p>
+        `;
+      }
+
+      function renderAsset(subpath) {
+        app.innerHTML = `
+          <h1>Asset-Seite</h1>
+          <p>Asset-Pfad: ${subpath}</p>
+        `;
+      }
+
+      function renderRadar(subpath) {
+        app.innerHTML = `
+          <h1>Radar</h1>
+          <p>Radar-Pfad: ${subpath}</p>
+        `;
+      }
+
+      // Routing
+      if (path === '/' || path === '') {
+        renderHome();
+      } else if (path.startsWith('/assets')) {
+        renderAsset(path);
+      } else if (path.startsWith('/radar')) {
+        renderRadar(path);
+      } else {
+        app.innerHTML = `
+          <h1>Unbekannter Pfad</h1>
+          <p>${path}</p>
+        `;
+      }
     })();
   </script>
 </body>

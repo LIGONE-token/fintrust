@@ -12,22 +12,20 @@
     (function () {
       const app = document.getElementById('app');
 
-      // Repo-Base automatisch berücksichtigen (/fintrust)
-      const base = window.location.pathname.split('/')[1];
-      const fullPath = window.location.pathname.replace(/\/+$/, '');
-      const path = fullPath.replace(new RegExp('^/' + base), '') || '/';
+      // Repo-Base automatisch erkennen (z. B. /fintrust)
+      const parts = window.location.pathname.replace(/\/+$/, '').split('/');
+      const base = parts.length > 1 ? '/' + parts[1] : '';
+      const path = window.location.pathname.replace(base, '').replace(/\/+$/, '') || '/';
 
       function renderHome() {
-        app.innerHTML = `
-          <h1>Startseite</h1>
-          <p>Pfad: /</p>
-        `;
+        app.innerHTML = `<h1>Startseite</h1><p>Pfad: /</p>`;
       }
 
-      function renderAsset(subpath) {
+      function renderAsset(type, slug) {
         app.innerHTML = `
           <h1>Asset-Seite</h1>
-          <p>Asset-Pfad: ${subpath}</p>
+          <p><strong>Typ:</strong> ${type}</p>
+          <p><strong>Slug:</strong> ${slug}</p>
         `;
       }
 
@@ -41,16 +39,23 @@
       // Routing
       if (path === '/' || path === '') {
         renderHome();
-      } else if (path.startsWith('/assets')) {
-        renderAsset(path);
-      } else if (path.startsWith('/radar')) {
-        renderRadar(path);
-      } else {
-        app.innerHTML = `
-          <h1>Unbekannter Pfad</h1>
-          <p>${path}</p>
-        `;
+        return;
       }
+
+      if (path.startsWith('/assets/')) {
+        const seg = path.split('/').filter(Boolean); // ['assets','crypto','btc']
+        const type = seg[1] || '';
+        const slug = seg[2] || '';
+        renderAsset(type, slug);
+        return;
+      }
+
+      if (path.startsWith('/radar')) {
+        renderRadar(path);
+        return;
+      }
+
+      app.innerHTML = `<h1>Unbekannter Pfad</h1><p>${path}</p>`;
     })();
   </script>
 </body>

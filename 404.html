@@ -4,23 +4,35 @@
   <meta charset="utf-8">
   <title>FINTRUST</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script>
-    // GitHub Pages SPA-Fallback:
-    // Leitet intern auf die App, ohne die URL zu verändern.
-    (function () {
-      var repoBase = '/fintrust';
-      var path = window.location.pathname;
+</head>
+<body>
+  <div id="app"></div>
 
-      if (!path.startsWith(repoBase)) {
-        path = repoBase + path;
+  <script>
+    (function () {
+      const app = document.getElementById('app');
+
+      const parts = window.location.pathname.replace(/\/+$/, '').split('/');
+      const base = parts.length > 1 ? '/' + parts[1] : '';
+      const path = window.location.pathname.replace(base, '').replace(/\/+$/, '') || '/';
+
+      const ASSETS = {
+        crypto: {
+          btc: { name: 'Bitcoin' }
+        }
+      };
+
+      if (path.startsWith('/assets/')) {
+        const seg = path.split('/').filter(Boolean);
+        const asset = ASSETS[seg[1]]?.[seg[2]];
+        app.innerHTML = asset
+          ? `<h1>${asset.name}</h1>`
+          : `<h1>Asset nicht gefunden</h1>`;
+        return;
       }
 
-      // Interner Reload der App
-      window.history.replaceState(null, '', path);
-      window.location.replace(repoBase + '/');
+      app.innerHTML = `<h1>Startseite</h1>`;
     })();
   </script>
-</head>
-<body></body>
+</body>
 </html>
-

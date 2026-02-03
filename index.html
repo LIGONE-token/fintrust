@@ -1,138 +1,59 @@
-<!doctype html>
-<html lang="de">
-<head>
-  <meta charset="utf-8">
-  <title>FINTRUST</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
-<body>
-  <div id="app"></div>
+<script>
+(function () {
+  const app = document.getElementById('app');
+  const BASE = '/fintrust';
 
-  <script>
-  (async function () {
-    window.addEventListener('hashchange', () => location.reload());
+  // Cache für geladene Daten (nur 1x fetch)
+  const store = {
+    loaded: false,
+    assets: [],
+    risks: [],
+    radar: [],
+    error: null
+  };
 
-    const app = document.getElementById('app');
-    const BASE = '/fintrust';
-
-    // ===== HASH-ROUTING (ENDGÜLTIG) =====
-    // Alles NACH # ist Client-Routing
-    let path = location.hash.replace(/^#/, '') || '/';
+  function parseHash() {
+    // Erwartet: #/radar?severity=warning oder #/assets/crypto/btc
+    const raw = (location.hash || '#/').replace(/^#/, '');
+    const [p, qs] = raw.split('?');
+    let path = p || '/';
     if (!path.startsWith('/')) path = '/' + path;
 
-    // ===== JSON LADEN =====
+    const params = new URLSearchParams(qs || '');
+    return { path, params };
+  }
+
+  async function loadOnce() {
+    if (store.loaded || store.error) return;
+
     async function loadJSON(url) {
       const res = await fetch(url, { cache: 'no-store' });
-      if (!res.ok) throw new Error(url);
+      if (!res.ok) throw new Error('Load failed: ' + url);
       return res.json();
     }
 
-    let assets, risks, radar;
     try {
-      [assets, risks, radar] = await Promise.all([
+      const [assets, risks, radar] = await Promise.all([
         loadJSON(BASE + '/data/assets.json'),
         loadJSON(BASE + '/data/risk_profiles.json'),
         loadJSON(BASE + '/data/radar_events.json')
       ]);
+      store.assets = assets;
+      store.risks = risks;
+      store.radar = radar;
+      store.loaded = true;
     } catch (e) {
-      app.innerHTML = `<h1>Datenfehler</h1><p>${e.message}</p>`;
-      return;
+      store.error = e;
     }
+  }
 
-    // ===== START =====
-    if (path === '/' ) {
-      app.innerHTML = `
-        <h1>FINTRUST</h1>
-        <ul>
-          ${assets.map(a => `
-            <li>
-              <a href="#/assets/${a.type}/${a.symbol.toLowerCase()}">
-                ${a.name} (${a.symbol})
-              </a>
-            </li>
-          `).join('')}
-        </ul>
-        <p><a href="#/radar">→ Radar</a></p>
-      `;
-      return;
-    }
+  function sevRank(sev) {
+    // wichtigstes zuerst
+    if (sev === 'critical') return 0;
+    if (sev === 'warning') return 1;
+    if (sev === 'info') return 2;
+    return 9;
+  }
 
-   /* ===== RADAR ===== */
-if (path.startsWith('/radar')) {
-
-  const params = new URLSearchParams(location.hash.split('?')[1] || '');
-  const filter = params.get('severity'); // info | warning | critical | null
-
-  const filtered = filter
-    ? radar.filter(r => r.severity === filter)
-    : radar;
-
-  app.innerHTML = `
-    <h1>Radar</h1>
-
-    <p>
-      Filter:
-      <a href="#/radar">Alle</a> |
-      <a href="#/radar?severity=warning">Warning</a> |
-      <a href="#/radar?severity=info">Info</a> |
-      <a href="#/radar?severity=critical">Critical</a>
-    </p>
-
-    ${filtered.length ? `
-      <ul>
-        ${filtered.map(e => {
-          const asset = assets.find(a => a.id === e.asset_id);
-          return `
-            <li>
-              <strong>${asset?.name ?? e.asset_id}</strong>
-              <em>(${e.category}, ${e.severity})</em><br>
-              ${e.message}
-            </li>
-          `;
-        }).join('')}
-      </ul>
-    ` : '<p>Keine Radar-Einträge für diesen Filter.</p>'}
-
-    <p><a href="#/">← Start</a></p>
-  `;
-  return;
-}
-
-
-    // ===== ASSET =====
-    if (path.startsWith('/assets/')) {
-      const seg = path.split('/').filter(Boolean);
-      const type = seg[1];
-      const slug = seg[2]?.toUpperCase();
-
-      const asset = assets.find(a => a.type === type && a.symbol === slug);
-      if (!asset) {
-        app.innerHTML = `<h1>Asset nicht gefunden</h1><p><a href="#/">← Start</a></p>`;
-        return;
-      }
-
-      const risk = risks.find(r => r.asset_id === asset.id);
-      const events = radar.filter(r => r.asset_id === asset.id);
-
-      app.innerHTML = `
-        <h1>${asset.name} (${asset.symbol})</h1>
-        <p><strong>Risiko:</strong> ${risk?.level ?? '—'}</p>
-        <p><strong>Flags:</strong> ${(risk?.flags || []).join(', ')}</p>
-
-        <h2>Radar</h2>
-        ${events.length ? `
-          <ul>
-            ${events.map(e => `<li><strong>${e.severity}</strong>: ${e.message}</li>`).join('')}
-          </ul>
-        ` : '<p>Keine aktuellen Auffälligkeiten.</p>'}
-
-        <p><a href="#/radar">→ Radar</a> · <a href="#/">← Start</a></p>
-      `;
-      return;
-    }
-
-    app.innerHTML = `<h1>Unbekannter Pfad</h1><p>${path}</p>`;
-  })();
-  </script>
-</body>
-</html>
+  function renderHome() {
+    const

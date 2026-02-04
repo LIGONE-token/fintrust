@@ -148,12 +148,31 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderRadar() {
-    if (!store.radar.length) {
-      app.innerHTML = `<p>Keine Radar-Einträge vorhanden.</p>`;
-      return;
-    }
+  if (!store.radar.length) {
+    app.innerHTML = `<p>Keine Radar-Einträge vorhanden.</p>`;
+    return;
+  }
 
-    const items = store.radar.map(e => {
+  const assetName = (id) => {
+    if (id === 'crypto:btc') return 'Bitcoin';
+    if (id === 'stock:nvda') return 'NVIDIA';
+    return id;
+  };
+
+  const categoryName = (cat) => {
+    const map = {
+      volatility: 'Volatilität ohne Fundament',
+      news: 'Mediale Überhitzung',
+      liquidity: 'Liquiditätsrisiko',
+      retail: 'Retail-Dominanz',
+      system: 'Systemische Abweichung'
+    };
+    return map[cat] || cat;
+  };
+
+  const items = store.radar
+    .sort((a, b) => new Date(b.detected_at) - new Date(a.detected_at))
+    .map(e => {
       const sevClass =
         e.severity === 'critical' ? 'severity-critical' :
         e.severity === 'warning'  ? 'severity-warning'  :
@@ -161,18 +180,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
       return `
         <div class="card">
-          <strong>${e.asset}</strong><br>
+          <strong>${assetName(e.asset_id)}</strong><br>
           <span class="${sevClass}">
-            ${e.category} – ${e.severity.toUpperCase()}
+            ${categoryName(e.category)} – ${e.severity.toUpperCase()}
           </span>
-          <p>${e.observation}</p>
-          <p><em>${e.assessment}</em></p>
+          <p>${e.message}</p>
+          <small>${new Date(e.detected_at).toLocaleString()}</small>
         </div>
       `;
     }).join('');
 
-    app.innerHTML = `<h2>Radar</h2>${items}`;
-  }
+  app.innerHTML = `<h2>Radar</h2>${items}`;
+}
 
   async function render() {
     await loadOnce();

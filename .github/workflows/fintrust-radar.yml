@@ -1,8 +1,6 @@
 name: FINTRUST Radar Automatik
 
 on:
-  schedule:
-    - cron: "0 * * * *"   # jede Stunde
   workflow_dispatch:
 
 permissions:
@@ -11,30 +9,18 @@ permissions:
 jobs:
   radar:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: fintrust
-
     steps:
-      - name: Repository auschecken
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Node.js einrichten
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "18"
 
-      - name: Radar prüfen & aktualisieren
-        run: node fintrust-radar.cjs
-
-      - name: Änderungen committen
+      - name: Sanity Check (Pfad)
         run: |
-          if [[ `git status --porcelain` ]]; then
-            git config user.name "fintrust-bot"
-            git config user.email "bot@fintrust.local"
-            git add data/radar_events.json
-            git commit -m "FINTRUST: automatisches Radar-Update"
-            git push
-          else
-            echo "Keine neuen Radar-Ereignisse"
-          fi
+          pwd
+          ls -la
+          ls -la data || true
+
+      - name: Radar starten
+        run: node fintrust-radar.cjs

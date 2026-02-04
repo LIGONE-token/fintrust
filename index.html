@@ -50,6 +50,17 @@
     .severity-info { color: #93c5fd; }
     .severity-warning { color: #fde68a; }
     .severity-critical { color: #fca5a5; }
+
+    .filter a {
+      color: #9ca3af;
+      margin-right: 8px;
+      text-decoration: none;
+    }
+    .filter a.active {
+      color: #ffffff;
+      font-weight: 600;
+    }
+
     footer {
       text-align: center;
       padding: 20px;
@@ -60,39 +71,31 @@
 </head>
 
 <body>
-  <header>
-    <h1>FINTRUST</h1>
-    <nav>
-      <a href="#/">Start</a>
-      <a href="#/radar">Radar</a>
-    </nav>
-  </header>
+<header>
+  <h1>FINTRUST</h1>
+  <nav>
+    <a href="#/">Start</a>
+    <a href="#/radar">Radar</a>
+  </nav>
+</header>
 
-  <main id="app">
-    <!-- SPA Content -->
-  </main>
+<main id="app"></main>
 
-  <footer>
-    FINTRUST – unabhängiges Marktbeobachtungs- & Frühwarnsystem
-  </footer>
+<footer>
+  FINTRUST – unabhängiges Marktbeobachtungs- & Frühwarnsystem
+</footer>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
 (function () {
-  console.log('FINTRUST Script gestartet');
 
   const app = document.getElementById('app');
-  if (!app) {
-    console.error('❌ #app nicht gefunden');
-    return;
-  }
+  if (!app) return;
 
   const BASE = '/fintrust';
 
   const store = {
     loaded: false,
-    assets: [],
-    risks: [],
     radar: [],
     error: null
   };
@@ -102,64 +105,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const [p, qs] = raw.split('?');
     let path = p || '/';
     if (!path.startsWith('/')) path = '/' + path;
-    const params = new URLSearchParams(qs || '');
-    return { path, params };
+    return { path, params: new URLSearchParams(qs || '') };
   }
 
   async function loadOnce() {
     if (store.loaded || store.error) return;
-
-    async function loadJSON(url) {
-      const res = await fetch(url, { cache: 'no-store' });
-      if (!res.ok) throw new Error('Load failed: ' + url);
-      return res.json();
-    }
-
     try {
-      const [assets, risks, radar] = await Promise.all([
-        loadJSON(BASE + '/data/assets.json'),
-        loadJSON(BASE + '/data/risk_profiles.json'),
-        loadJSON(BASE + '/data/radar_events.json')
-      ]);
-      store.assets = assets;
-      store.risks = risks;
-      store.radar = radar;
+      const res = await fetch(BASE + '/data/radar_events.json', { cache: 'no-store' });
+      if (!res.ok) throw new Error('Radar JSON nicht ladbar');
+      store.radar = await res.json();
       store.loaded = true;
-      console.log('✅ Daten geladen');
     } catch (e) {
       store.error = e;
-      console.error('❌ Datenfehler', e);
     }
   }
 
-  function renderHome() {
-    app.innerHTML = `
-      <div class="card">
-        <h2>Was ist FINTRUST?</h2>
-        <p>
-          FINTRUST ist ein unabhängiges Radar für Marktanomalien,
-          systemische Risiken und Vertrauensabweichungen.
-        </p>
-        <p>
-          Keine Preise. Keine Signale. Keine Versprechen.
-        </p>
-      </div>
-    `;
+  function assetName(id) {
+    const map = {
+      'crypto:btc': 'Bitcoin',
+      'stock:nvda': 'NVIDIA'
+    };
+    return map[id] || id;
   }
 
-  function renderRadar() {
-  if (!store.radar.length) {
-    app.innerHTML = `<p>Keine Radar-Einträge vorhanden.</p>`;
-    return;
-  }
-
-  const assetName = (id) => {
-    if (id === 'crypto:btc') return 'Bitcoin';
-    if (id === 'stock:nvda') return 'NVIDIA';
-    return id;
-  };
-
-  const categoryName = (cat) => {
+  function categoryName(cat) {
     const map = {
       volatility: 'Volatilität ohne Fundament',
       news: 'Mediale Überhitzung',
@@ -168,52 +137,90 @@ document.addEventListener('DOMContentLoaded', () => {
       system: 'Systemische Abweichung'
     };
     return map[cat] || cat;
-  };
+  }
 
-  const items = store.radar
-    .sort((a, b) => new Date(b.detected_at) - new Date(a.detected_at))
-    .map(e => {
-      const sevClass =
-        e.severity === 'critical' ? 'severity-critical' :
-        e.severity === 'warning'  ? 'severity-warning'  :
-        'severity-info';
+  function renderHome() {
+    app.innerHTML = `
+      <div class="card">
+        <h2>FINTRUST</h2>
+        <p>
+          FINTRUST ist ein unabhängiges Radar für Marktanomalien,
+          systemische Risiken und Vertrauensabweichungen.
+        </p>
+        <p><strong>Keine Preise. Keine Signale. Keine Versprechen.</strong></p>
+      </div>
+    `;
+  }
 
-      return `
-        <div class="card">
-          <strong>${assetName(e.asset_id)}</strong><br>
-          <span class="${sevClass}">
-            ${categoryName(e.category)} – ${e.severity.toUpperCase()}
-          </span>
-          <p>${e.message}</p>
-          <small>${new Date(e.detected_at).toLocaleString()}</small>
-        </div>
-      `;
-    }).join('');
+  function renderRadar() {
+    if (!store.radar.length) {
+      app.innerHTML = `<p>Keine Radar-Einträge vorhanden.</p>`;
+      return;
+    }
 
-  app.innerHTML = `<h2>Radar</h2>${items}`;
-}
+    const { params } = parseHash();
+    const activeSeverity = params.get('severity');
+
+    const filterLink = (sev, label) => {
+      const active = activeSeverity === sev || (!sev && !activeSeverity);
+      const href = sev ? `#/radar?severity=${sev}` : '#/radar';
+      return `<a href="${href}" class="${active ? 'active' : ''}">${label}</a>`;
+    };
+
+    const filterBar = `
+      <div class="card filter">
+        <strong>Filter:</strong>
+        ${filterLink(null, 'Alle')}
+        ${filterLink('info', '🟢 Beobachtung')}
+        ${filterLink('warning', '🟡 Warnung')}
+        ${filterLink('critical', '🔴 Alarm')}
+      </div>
+    `;
+
+    const items = store.radar
+      .filter(e => !activeSeverity || e.severity === activeSeverity)
+      .sort((a, b) => new Date(b.detected_at) - new Date(a.detected_at))
+      .map(e => {
+        const sevClass =
+          e.severity === 'critical' ? 'severity-critical' :
+          e.severity === 'warning'  ? 'severity-warning' :
+          'severity-info';
+
+        return `
+          <div class="card">
+            <strong>${assetName(e.asset_id)}</strong><br>
+            <span class="${sevClass}">
+              ${categoryName(e.category)} – ${e.severity.toUpperCase()}
+            </span>
+            <p>${e.message}</p>
+            <small>${new Date(e.detected_at).toLocaleString()}</small>
+          </div>
+        `;
+      }).join('');
+
+    app.innerHTML = `
+      <h2>Radar</h2>
+      ${filterBar}
+      ${items || '<p>Keine Einträge für diesen Filter.</p>'}
+    `;
+  }
 
   async function render() {
     await loadOnce();
-
     if (store.error) {
-      app.innerHTML = `<p>Fehler beim Laden der Daten.</p>`;
+      app.innerHTML = `<p>Fehler beim Laden der Radar-Daten.</p>`;
       return;
     }
 
     const { path } = parseHash();
-
-    if (path === '/' || path === '/home') {
-      renderHome();
-    } else if (path === '/radar') {
-      renderRadar();
-    } else {
-      app.innerHTML = `<p>Unbekannter Pfad: ${path}</p>`;
-    }
+    if (path === '/' || path === '/home') renderHome();
+    else if (path === '/radar') renderRadar();
+    else app.innerHTML = `<p>Unbekannter Pfad: ${path}</p>`;
   }
 
   window.addEventListener('hashchange', render);
   render();
+
 })();
 });
 </script>

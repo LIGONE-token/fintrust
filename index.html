@@ -1,9 +1,94 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>FINTRUST – Radar</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0b0e11;
+      color: #e5e7eb;
+    }
+    header {
+      padding: 16px 20px;
+      background: #111827;
+      border-bottom: 1px solid #1f2933;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+    }
+    nav {
+      margin-top: 8px;
+      display: flex;
+      gap: 12px;
+      font-size: 14px;
+    }
+    nav a {
+      color: #9ca3af;
+      text-decoration: none;
+    }
+    nav a:hover {
+      color: #ffffff;
+    }
+    main {
+      padding: 20px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .card {
+      background: #111827;
+      border: 1px solid #1f2933;
+      border-radius: 6px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    .severity-info { color: #93c5fd; }
+    .severity-warning { color: #fde68a; }
+    .severity-critical { color: #fca5a5; }
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #6b7280;
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>FINTRUST</h1>
+    <nav>
+      <a href="#/">Start</a>
+      <a href="#/radar">Radar</a>
+    </nav>
+  </header>
+
+  <main id="app">
+    <!-- SPA Content -->
+  </main>
+
+  <footer>
+    FINTRUST – unabhängiges Marktbeobachtungs- & Frühwarnsystem
+  </footer>
+
 <script>
+document.addEventListener('DOMContentLoaded', () => {
 (function () {
+  console.log('FINTRUST Script gestartet');
+
   const app = document.getElementById('app');
+  if (!app) {
+    console.error('❌ #app nicht gefunden');
+    return;
+  }
+
   const BASE = '/fintrust';
 
-  // Cache für geladene Daten (nur 1x fetch)
   const store = {
     loaded: false,
     assets: [],
@@ -13,12 +98,10 @@
   };
 
   function parseHash() {
-    // Erwartet: #/radar?severity=warning oder #/assets/crypto/btc
     const raw = (location.hash || '#/').replace(/^#/, '');
     const [p, qs] = raw.split('?');
     let path = p || '/';
     if (!path.startsWith('/')) path = '/' + path;
-
     const params = new URLSearchParams(qs || '');
     return { path, params };
   }
@@ -42,18 +125,79 @@
       store.risks = risks;
       store.radar = radar;
       store.loaded = true;
+      console.log('✅ Daten geladen');
     } catch (e) {
       store.error = e;
+      console.error('❌ Datenfehler', e);
     }
   }
 
-  function sevRank(sev) {
-    // wichtigstes zuerst
-    if (sev === 'critical') return 0;
-    if (sev === 'warning') return 1;
-    if (sev === 'info') return 2;
-    return 9;
+  function renderHome() {
+    app.innerHTML = `
+      <div class="card">
+        <h2>Was ist FINTRUST?</h2>
+        <p>
+          FINTRUST ist ein unabhängiges Radar für Marktanomalien,
+          systemische Risiken und Vertrauensabweichungen.
+        </p>
+        <p>
+          Keine Preise. Keine Signale. Keine Versprechen.
+        </p>
+      </div>
+    `;
   }
 
-  function renderHome() {
-    const
+  function renderRadar() {
+    if (!store.radar.length) {
+      app.innerHTML = `<p>Keine Radar-Einträge vorhanden.</p>`;
+      return;
+    }
+
+    const items = store.radar.map(e => {
+      const sevClass =
+        e.severity === 'critical' ? 'severity-critical' :
+        e.severity === 'warning'  ? 'severity-warning'  :
+        'severity-info';
+
+      return `
+        <div class="card">
+          <strong>${e.asset}</strong><br>
+          <span class="${sevClass}">
+            ${e.category} – ${e.severity.toUpperCase()}
+          </span>
+          <p>${e.observation}</p>
+          <p><em>${e.assessment}</em></p>
+        </div>
+      `;
+    }).join('');
+
+    app.innerHTML = `<h2>Radar</h2>${items}`;
+  }
+
+  async function render() {
+    await loadOnce();
+
+    if (store.error) {
+      app.innerHTML = `<p>Fehler beim Laden der Daten.</p>`;
+      return;
+    }
+
+    const { path } = parseHash();
+
+    if (path === '/' || path === '/home') {
+      renderHome();
+    } else if (path === '/radar') {
+      renderRadar();
+    } else {
+      app.innerHTML = `<p>Unbekannter Pfad: ${path}</p>`;
+    }
+  }
+
+  window.addEventListener('hashchange', render);
+  render();
+})();
+});
+</script>
+
+</body>
+</html>

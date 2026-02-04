@@ -5,9 +5,15 @@ on:
     - cron: "0 * * * *"   # jede Stunde
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   radar:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: fintrust
 
     steps:
       - name: Repository auschecken
@@ -19,8 +25,7 @@ jobs:
           node-version: "18"
 
       - name: Radar prüfen & aktualisieren
-        run: |
-          node fintrust-radar.js
+        run: node fintrust-radar.cjs
 
       - name: Änderungen committen
         run: |

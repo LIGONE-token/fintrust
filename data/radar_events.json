@@ -1,18 +1,2 @@
-[
-  {
-    "id": "radar_20260203_001",
-    "asset_id": "crypto:btc",
-    "category": "volatility",
-    "severity": "warning",
-    "message": "Ungewöhnlich starke Bewegung ohne begleitende Fundamentaldaten.",
-    "detected_at": "2026-02-03T08:15:00Z"
-  },
-  {
-    "id": "radar_20260203_002",
-    "asset_id": "stock:nvda",
-    "category": "news",
-    "severity": "info",
-    "message": "Erhöhte Medienaufmerksamkeit im Zusammenhang mit KI-Erwartungen.",
-    "detected_at": "2026-02-03T07:40:00Z"
-  }
-]
+[]
+  

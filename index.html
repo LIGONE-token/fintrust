@@ -60,7 +60,13 @@
       color: #ffffff;
       font-weight: 600;
     }
-
+    a {
+      color: #9ca3af;
+      text-decoration: none;
+    }
+    a:hover {
+      color: #ffffff;
+    }
     footer {
       text-align: center;
       padding: 20px;
@@ -183,12 +189,16 @@ document.addEventListener('DOMContentLoaded', () => {
       .map(e => {
         const sevClass =
           e.severity === 'critical' ? 'severity-critical' :
-          e.severity === 'warning'  ? 'severity-warning' :
+          e.severity === 'warning'  ? 'severity-warning'  :
           'severity-info';
 
         return `
           <div class="card">
-            <strong>${assetName(e.asset_id)}</strong><br>
+            <strong>
+              <a href="#/asset/${e.asset_id}">
+                ${assetName(e.asset_id)}
+              </a>
+            </strong><br>
             <span class="${sevClass}">
               ${categoryName(e.category)} – ${e.severity.toUpperCase()}
             </span>
@@ -205,6 +215,44 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
   }
 
+  function renderAsset(assetId) {
+    const events = store.radar
+      .filter(e => e.asset_id === assetId)
+      .sort((a, b) => new Date(b.detected_at) - new Date(a.detected_at));
+
+    if (!events.length) {
+      app.innerHTML = `
+        <h2>${assetName(assetId)}</h2>
+        <p>Keine Radar-Einträge für dieses Asset.</p>
+        <p><a href="#/radar">← zurück zum Radar</a></p>
+      `;
+      return;
+    }
+
+    const items = events.map(e => {
+      const sevClass =
+        e.severity === 'critical' ? 'severity-critical' :
+        e.severity === 'warning'  ? 'severity-warning'  :
+        'severity-info';
+
+      return `
+        <div class="card">
+          <span class="${sevClass}">
+            ${categoryName(e.category)} – ${e.severity.toUpperCase()}
+          </span>
+          <p>${e.message}</p>
+          <small>${new Date(e.detected_at).toLocaleString()}</small>
+        </div>
+      `;
+    }).join('');
+
+    app.innerHTML = `
+      <h2>${assetName(assetId)}</h2>
+      <p><a href="#/radar">← zurück zum Radar</a></p>
+      ${items}
+    `;
+  }
+
   async function render() {
     await loadOnce();
     if (store.error) {
@@ -215,6 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const { path } = parseHash();
     if (path === '/' || path === '/home') renderHome();
     else if (path === '/radar') renderRadar();
+    else if (path.startsWith('/asset/')) renderAsset(path.split('/asset/')[1]);
     else app.innerHTML = `<p>Unbekannter Pfad: ${path}</p>`;
   }
 

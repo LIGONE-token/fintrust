@@ -32,9 +32,8 @@
       color: #9ca3af;
       text-decoration: none;
     }
-    nav a:hover {
-      color: #ffffff;
-    }
+    nav a:hover { color: #ffffff; }
+
     main {
       padding: 20px;
       max-width: 900px;
@@ -47,6 +46,7 @@
       padding: 16px;
       margin-bottom: 14px;
     }
+
     .severity-info { color: #93c5fd; }
     .severity-warning { color: #fde68a; }
     .severity-critical { color: #fca5a5; }
@@ -60,13 +60,10 @@
       color: #ffffff;
       font-weight: 600;
     }
-    a {
-      color: #9ca3af;
-      text-decoration: none;
-    }
-    a:hover {
-      color: #ffffff;
-    }
+
+    a { color: #9ca3af; text-decoration: none; }
+    a:hover { color: #ffffff; }
+
     footer {
       text-align: center;
       padding: 20px;
@@ -127,22 +124,28 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function assetName(id) {
-    const map = {
+    return {
       'crypto:btc': 'Bitcoin',
       'stock:nvda': 'NVIDIA'
-    };
-    return map[id] || id;
+    }[id] || id;
   }
 
   function categoryName(cat) {
-    const map = {
+    return {
       volatility: 'Volatilität ohne Fundament',
       news: 'Mediale Überhitzung',
       liquidity: 'Liquiditätsrisiko',
       retail: 'Retail-Dominanz',
       system: 'Systemische Abweichung'
-    };
-    return map[cat] || cat;
+    }[cat] || cat;
+  }
+
+  function timeLimit(time) {
+    const now = Date.now();
+    if (time === '24h') return now - 24 * 60 * 60 * 1000;
+    if (time === '7d')  return now - 7  * 24 * 60 * 60 * 1000;
+    if (time === '30d') return now - 30 * 24 * 60 * 60 * 1000;
+    return 0;
   }
 
   function renderHome() {
@@ -159,97 +162,71 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderRadar() {
-    if (!store.radar.length) {
-      app.innerHTML = `<p>Keine Radar-Einträge vorhanden.</p>`;
-      return;
-    }
-
     const { params } = parseHash();
-    const activeSeverity = params.get('severity');
+    const sev = params.get('severity');
+    const time = params.get('time');
+    const limit = timeLimit(time);
 
-    const filterLink = (sev, label) => {
-      const active = activeSeverity === sev || (!sev && !activeSeverity);
-      const href = sev ? `#/radar?severity=${sev}` : '#/radar';
-      return `<a href="${href}" class="${active ? 'active' : ''}">${label}</a>`;
+    const link = (s, t, label) => {
+      const p = new URLSearchParams();
+      if (s) p.set('severity', s);
+      if (t) p.set('time', t);
+      const active = sev === s && time === t;
+      return `<a href="#/radar?${p.toString()}" class="${active ? 'active' : ''}">${label}</a>`;
     };
 
     const filterBar = `
       <div class="card filter">
-        <strong>Filter:</strong>
-        ${filterLink(null, 'Alle')}
-        ${filterLink('info', '🟢 Beobachtung')}
-        ${filterLink('warning', '🟡 Warnung')}
-        ${filterLink('critical', '🔴 Alarm')}
+        <strong>Severity:</strong>
+        ${link(null, time, 'Alle')}
+        ${link('info', time, '🟢')}
+        ${link('warning', time, '🟡')}
+        ${link('critical', time, '🔴')}
+        <br><br>
+        <strong>Zeit:</strong>
+        ${link(sev, null, 'Alle')}
+        ${link(sev, '24h', '24h')}
+        ${link(sev, '7d', '7 Tage')}
+        ${link(sev, '30d', '30 Tage')}
       </div>
     `;
 
     const items = store.radar
-      .filter(e => !activeSeverity || e.severity === activeSeverity)
+      .filter(e => !sev || e.severity === sev)
+      .filter(e => !limit || new Date(e.detected_at).getTime() >= limit)
       .sort((a, b) => new Date(b.detected_at) - new Date(a.detected_at))
-      .map(e => {
-        const sevClass =
-          e.severity === 'critical' ? 'severity-critical' :
-          e.severity === 'warning'  ? 'severity-warning'  :
-          'severity-info';
-
-        return `
-          <div class="card">
-            <strong>
-              <a href="#/asset/${e.asset_id}">
-                ${assetName(e.asset_id)}
-              </a>
-            </strong><br>
-            <span class="${sevClass}">
-              ${categoryName(e.category)} – ${e.severity.toUpperCase()}
-            </span>
-            <p>${e.message}</p>
-            <small>${new Date(e.detected_at).toLocaleString()}</small>
-          </div>
-        `;
-      }).join('');
-
-    app.innerHTML = `
-      <h2>Radar</h2>
-      ${filterBar}
-      ${items || '<p>Keine Einträge für diesen Filter.</p>'}
-    `;
-  }
-
-  function renderAsset(assetId) {
-    const events = store.radar
-      .filter(e => e.asset_id === assetId)
-      .sort((a, b) => new Date(b.detected_at) - new Date(a.detected_at));
-
-    if (!events.length) {
-      app.innerHTML = `
-        <h2>${assetName(assetId)}</h2>
-        <p>Keine Radar-Einträge für dieses Asset.</p>
-        <p><a href="#/radar">← zurück zum Radar</a></p>
-      `;
-      return;
-    }
-
-    const items = events.map(e => {
-      const sevClass =
-        e.severity === 'critical' ? 'severity-critical' :
-        e.severity === 'warning'  ? 'severity-warning'  :
-        'severity-info';
-
-      return `
+      .map(e => `
         <div class="card">
-          <span class="${sevClass}">
+          <strong><a href="#/asset/${e.asset_id}">${assetName(e.asset_id)}</a></strong><br>
+          <span class="severity-${e.severity}">
             ${categoryName(e.category)} – ${e.severity.toUpperCase()}
           </span>
           <p>${e.message}</p>
           <small>${new Date(e.detected_at).toLocaleString()}</small>
         </div>
-      `;
-    }).join('');
+      `).join('');
 
     app.innerHTML = `
-      <h2>${assetName(assetId)}</h2>
+      <h2>Radar</h2>
+      ${filterBar}
+      ${items || '<p>Keine Einträge für diese Auswahl.</p>'}
+    `;
+  }
+
+  function renderAsset(id) {
+    const events = store.radar.filter(e => e.asset_id === id);
+    app.innerHTML = `
+      <h2>${assetName(id)}</h2>
       <p><a href="#/radar">← zurück zum Radar</a></p>
-      ${items}
+      ${events.map(e => `
+        <div class="card">
+          <span class="severity-${e.severity}">
+            ${categoryName(e.category)} – ${e.severity.toUpperCase()}
+          </span>
+          <p>${e.message}</p>
+          <small>${new Date(e.detected_at).toLocaleString()}</small>
+        </div>
+      `).join('')}
     `;
   }
 
@@ -259,12 +236,11 @@ document.addEventListener('DOMContentLoaded', () => {
       app.innerHTML = `<p>Fehler beim Laden der Radar-Daten.</p>`;
       return;
     }
-
     const { path } = parseHash();
     if (path === '/' || path === '/home') renderHome();
     else if (path === '/radar') renderRadar();
     else if (path.startsWith('/asset/')) renderAsset(path.split('/asset/')[1]);
-    else app.innerHTML = `<p>Unbekannter Pfad: ${path}</p>`;
+    else app.innerHTML = `<p>Unbekannter Pfad</p>`;
   }
 
   window.addEventListener('hashchange', render);
@@ -273,6 +249,10 @@ document.addEventListener('DOMContentLoaded', () => {
 })();
 });
 </script>
+
+<!-- 🔹 Option 1 – leise Messung -->
+<script data-goatcounter="https://fintrust.goatcounter.com/count"
+        async src="https://gc.zgo.at/count.js"></script>
 
 </body>
 </html>

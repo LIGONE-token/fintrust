@@ -1,2 +1,10 @@
-[]
-  
+[
+  {
+    "id": "radar_nvda_1770268093571",
+    "asset_id": "stock:nvda",
+    "category": "news",
+    "severity": "info",
+    "message": "Erhöhte Medienaufmerksamkeit im Zusammenhang mit KI-Erwartungen.",
+    "detected_at": "2026-02-05T05:08:13.571Z"
+  }
+]

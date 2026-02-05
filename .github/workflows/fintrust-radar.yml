@@ -1,6 +1,8 @@
 name: FINTRUST Radar Automatik
 
 on:
+  schedule:
+    - cron: "0 * * * *"   # stündlich
   workflow_dispatch:
 
 permissions:
@@ -16,11 +18,15 @@ jobs:
         with:
           node-version: "18"
 
-      - name: Sanity Check (Pfad)
-        run: |
-          pwd
-          ls -la
-          ls -la data || true
-
-      - name: Radar starten
+      - name: Run radar
         run: node fintrust-radar.cjs
+
+      - name: Commit changes (if any)
+        run: |
+          if [[ `git status --porcelain` ]]; then
+            git config user.name "fintrust-bot"
+            git config user.email "bot@fintrust.local"
+            git add data/*.json
+            git commit -m "FINTRUST: radar update"
+            git push
+          fi

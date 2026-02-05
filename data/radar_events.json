@@ -14,5 +14,13 @@
     "severity": "info",
     "message": "Erhöhte Medienaufmerksamkeit im Zusammenhang mit KI-Erwartungen.",
     "detected_at": "2026-02-05T11:35:43.393Z"
+  },
+  {
+    "id": "radar_btc_1770306071467",
+    "asset_id": "crypto:btc",
+    "category": "volatility",
+    "severity": "warning",
+    "message": "Ungewöhnlich starke Bewegung ohne begleitende Fundamentaldaten.",
+    "detected_at": "2026-02-05T15:41:11.467Z"
   }
 ]

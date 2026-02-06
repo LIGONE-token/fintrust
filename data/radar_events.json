@@ -70,5 +70,13 @@
     "severity": "warning",
     "message": "Ungewöhnlich starke Bewegung ohne begleitende Fundamentaldaten.",
     "detected_at": "2026-02-06T14:39:12.108Z"
+  },
+  {
+    "id": "radar_nvda_1770392423698",
+    "asset_id": "stock:nvda",
+    "category": "news",
+    "severity": "info",
+    "message": "Erhöhte Medienaufmerksamkeit im Zusammenhang mit KI-Erwartungen.",
+    "detected_at": "2026-02-06T15:40:23.699Z"
   }
 ]

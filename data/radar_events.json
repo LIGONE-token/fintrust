@@ -78,5 +78,13 @@
     "severity": "info",
     "message": "Erhöhte Medienaufmerksamkeit im Zusammenhang mit KI-Erwartungen.",
     "detected_at": "2026-02-06T15:40:23.699Z"
+  },
+  {
+    "id": "radar_nvda_1770416734486",
+    "asset_id": "stock:nvda",
+    "category": "news",
+    "severity": "info",
+    "message": "Erhöhte Medienaufmerksamkeit im Zusammenhang mit KI-Erwartungen.",
+    "detected_at": "2026-02-06T22:25:34.486Z"
   }
 ]

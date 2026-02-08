@@ -64,39 +64,17 @@
     a { color: #9ca3af; text-decoration: none; }
     a:hover { color: #ffffff; }
 
+    .muted {
+      color: #9ca3af;
+      font-size: 14px;
+    }
+
     footer {
       text-align: center;
       padding: 20px;
       color: #6b7280;
       font-size: 13px;
     }
-    /* ---------- Radar Detail / LIG1-Gate ---------- */
-
-.locked {
-  opacity: 0.55;
-  border-style: dashed;
-}
-
-.locked h2 {
-  margin-top: 0;
-}
-
-.muted {
-  color: #9ca3af;
-  font-size: 14px;
-}
-
-.locked-list {
-  list-style: none;
-  padding-left: 0;
-  margin: 12px 0 0 0;
-}
-
-.locked-list li {
-  margin: 6px 0;
-  color: #9ca3af;
-}
-
   </style>
 </head>
 
@@ -194,6 +172,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const time = params.get('time');
     const limit = timeLimit(time);
 
+    const infoBox = `
+      <div class="card">
+        <strong>Was zeigt das FINTRUST Radar?</strong>
+        <p>
+          Das Radar erkennt ungewöhnliche Marktbewegungen,
+          mediale Überhitzung und systemische Abweichungen –
+          ohne Preise, Prognosen oder Handlungsempfehlungen.
+        </p>
+        <p class="muted">
+          Jede Meldung ist ein Hinweis, kein Signal.
+        </p>
+      </div>
+    `;
+
     const link = (s, t, label) => {
       const p = new URLSearchParams();
       if (s) p.set('severity', s);
@@ -235,6 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     app.innerHTML = `
       <h2>Radar</h2>
+      ${infoBox}
       ${filterBar}
       ${items || '<p>Keine Einträge für diese Auswahl.</p>'}
     `;
@@ -277,7 +270,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
-<!-- 🔹 Option 1 – leise Messung -->
 <script data-goatcounter="https://fintrust.goatcounter.com/count"
         async src="https://gc.zgo.at/count.js"></script>
 

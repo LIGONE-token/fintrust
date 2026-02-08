@@ -185,6 +185,34 @@ document.addEventListener('DOMContentLoaded', () => {
         </p>
       </div>
     `;
+    const now = Date.now();
+const stats = {
+  total: store.radar.length,
+  last24h: store.radar.filter(e =>
+    now - new Date(e.detected_at).getTime() <= 24 * 60 * 60 * 1000
+  ).length,
+  last7d: store.radar.filter(e =>
+    now - new Date(e.detected_at).getTime() <= 7 * 24 * 60 * 60 * 1000
+  ).length,
+  last30d: store.radar.filter(e =>
+    now - new Date(e.detected_at).getTime() <= 30 * 24 * 60 * 60 * 1000
+  ).length
+};
+
+const statsBox = `
+  <div class="card">
+    <strong>Radar-Aktivität</strong>
+    <ul class="locked-list">
+      <li>Gesamt erfasste Ereignisse: <strong>${stats.total}</strong></li>
+      <li>Letzte 24 Stunden: <strong>${stats.last24h}</strong></li>
+      <li>Letzte 7 Tage: <strong>${stats.last7d}</strong></li>
+      <li>Letzte 30 Tage: <strong>${stats.last30d}</strong></li>
+    </ul>
+    <p class="muted">
+      Basierend ausschließlich auf real erkannten Radar-Ereignissen.
+    </p>
+  </div>
+`;
 
     const link = (s, t, label) => {
       const p = new URLSearchParams();
@@ -226,12 +254,13 @@ document.addEventListener('DOMContentLoaded', () => {
       `).join('');
 
     app.innerHTML = `
-      <h2>Radar</h2>
-      ${infoBox}
-      ${filterBar}
-      ${items || '<p>Keine Einträge für diese Auswahl.</p>'}
-    `;
-  }
+  <h2>Radar</h2>
+  ${infoBox}
+  ${statsBox}
+  ${filterBar}
+  ${items || '<p>Keine Einträge für diese Auswahl.</p>'}
+`;
+
 
   function renderAsset(id) {
     const events = store.radar.filter(e => e.asset_id === id);
